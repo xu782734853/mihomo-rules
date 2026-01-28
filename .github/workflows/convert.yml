@@ -1,0 +1,136 @@
+name: 转换 MRS 规则
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'rules/text/**'
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+      
+      - name: 下载 Mihomo
+        run: |
+          # 获取最新版本
+          LATEST_VERSION=$(curl -s https://api.github.com/repos/MetaCubeX/mihomo/releases/latest | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')
+          echo "最新版本: $LATEST_VERSION"
+          
+          # 下载对应平台的二进制文件
+          wget "https://github.com/MetaCubeX/mihomo/releases/download/${LATEST_VERSION}/mihomo-linux-amd64-${LATEST_VERSION}.gz"
+          
+          # 解压
+          gunzip "mihomo-linux-amd64-${LATEST_VERSION}.gz"
+          mv "mihomo-linux-amd64-${LATEST_VERSION}" mihomo
+          chmod +x mihomo
+          
+          # 验证
+          ./mihomo version
+      
+      - name: 创建输出目录
+        run: |
+          mkdir -p rules/mrs
+      
+      - name: 转换规则文件
+        run: |
+          # 遍历所有文本规则文件并转换
+          for txt_file in rules/text/*.txt; do
+            if [ -f "$txt_file" ]; then
+              filename=$(basename "$txt_file" .txt)
+              
+              echo "正在转换: $filename"
+              
+              # 根据文件名判断规则类型
+              case "$filename" in
+                domain|domain_suffix|domain_keyword)
+                  behavior="domain"
+                  ;;
+                ipcidr|ip_cidr|ipcidr6)
+                  behavior="ipcidr"
+                  ;;
+                classical|mixed)
+                  behavior="classical"
+                  ;;
+                *)
+                  # 默认使用 domain
+                  behavior="domain"
+                  ;;
+              esac
+              
+              # 执行转换
+              ./mihomo convert-ruleset "$behavior" text "$txt_file" "rules/mrs/${filename}.mrs"
+              
+              if [ $? -eq 0 ]; then
+                echo "✅ ${filename}.mrs 转换成功"
+                ls -lh "rules/mrs/${filename}.mrs"
+              else
+                echo "❌ ${filename}.mrs 转换失败"
+              fi
+            fi
+          done
+      
+      - name: 生成规则列表
+        run: |
+          echo "# 可用规则" > rules/mrs/README.md
+          echo "" >> rules/mrs/README.md
+          echo "生成时间: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> rules/mrs/README.md
+          echo "" >> rules/mrs/README.md
+          echo "| 文件名 | 大小 | 下载链接 |" >> rules/mrs/README.md
+          echo "|--------|------|----------|" >> rules/mrs/README.md
+          
+          for mrs_file in rules/mrs/*.mrs; do
+            if [ -f "$mrs_file" ]; then
+              filename=$(basename "$mrs_file")
+              filesize=$(ls -lh "$mrs_file" | awk '{print $5}')
+              echo "| $filename | $filesize | [下载](https://github.com/${{ github.repository }}/releases/latest/download/$filename) |" >> rules/mrs/README.md
+            fi
+          done
+      
+      - name: 提交转换结果
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add rules/mrs/
+          git diff --quiet && git diff --staged --quiet || git commit -m "🤖 自动转换 MRS 规则 [$(date '+%Y-%m-%d %H:%M:%S')]"
+          git push
+      
+      - name: 创建 Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ github.run_number }}
+          name: MRS Rules v${{ github.run_number }}
+          body: |
+            🎉 自动生成的 MRS 规则集
+            
+            **生成时间**: ${{ github.event.head_commit.timestamp }}
+            **提交信息**: ${{ github.event.head_commit.message }}
+            
+            ## 📥 使用方法
+            
+            在 mihomo 配置中添加：
+            
+            ```yaml
+            rule-providers:
+              my-rules:
+                type: http
+                behavior: domain  # 根据实际类型修改
+                format: mrs
+                url: "https://github.com/${{ github.repository }}/releases/latest/download/domain.mrs"
+                interval: 86400
+            ```
+            
+            ## 📋 可用文件
+            
+            查看下方 Assets 中的所有 .mrs 文件
+          files: |
+            rules/mrs/*.mrs
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
