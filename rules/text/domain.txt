@@ -1,1 +1,2 @@
-- DOMAIN-SUFFIX,bangumi.ca
+payload:
+  - DOMAIN-SUFFIX,bangumi.ca
