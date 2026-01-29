@@ -9,6 +9,7 @@ scontent-dfw6-1.cdninstagram.com
 i.instagram.com
 edge-mqtt.facebook.com
 graph.facebook.com
+lookaside.facebook.com
 z-p42-chat-e2ee-ig.facebook.com
 media0.giphy.com
 media1.giphy.com
