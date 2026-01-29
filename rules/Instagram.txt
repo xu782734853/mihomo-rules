@@ -1,0 +1,12 @@
+insta.primemods.co.in
+test-gateway.instagram.com
+graph.instagram.com
+scontent-lax3-1.cdninstagram.com
+scontent-lax7-1.cdninstagram.com
+scontent-lax3-2.cdninstagram.com
+scontent-dfw6-1.cdninstagram.com
+i.instagram.com
+edge-mqtt.facebook.com
+graph.facebook.com
+z-p42-chat-e2ee-ig.facebook.com
+62be20a1-b932-40fd-bf8d-ad3a3ff06872-netseer-ipaddr-assoc.xz.fbcdn.net
