@@ -1,7 +1,8 @@
-link00.okemby.org
-emby.bangumi.ca
-emos.best
-image.tmdb.org
-image.theotherdb.org
-cas2.dandanplay.net
-api.dandanplay.net
+insta.primemods.co.in
+z-p42-chat-e2ee-ig.facebook.com
+graph.instagram.com
+scontent-lax3-1.cdninstagram.com
+scontent-lax7-1.cdninstagram.com
+scontent-lax3-2.cdninstagram.com
+scontent-dfw6-1.cdninstagram.com
+i.instagram.com
