@@ -1,1 +1,1 @@
-DOMAIN-KEYWORD,emby
+- DOMAIN-SUFFIX,bangumi.ca
