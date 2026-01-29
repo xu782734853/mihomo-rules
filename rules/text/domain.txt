@@ -1,2 +1,5 @@
 link00.okemby.org
 emby.bangumi.ca
+emos.best
+image.tmdb.org
+image.theotherdb.org
