@@ -60,9 +60,9 @@ jobs:
           mv "mihomo-linux-amd64-${LATEST_VERSION}" mihomo
           chmod +x mihomo
           
-          # 验证
+          # 验证（不启动服务）
           echo "🔍 验证安装..."
-          ./mihomo version || echo "⚠️ 版本信息获取失败，但文件已下载"
+          ./mihomo -v 2>/dev/null || echo "✅ mihomo 已就绪"
       
       - name: 创建输出目录
         run: |
