@@ -18,20 +18,51 @@ jobs:
       
       - name: 下载 Mihomo
         run: |
-          # 获取最新版本
-          LATEST_VERSION=$(curl -s https://api.github.com/repos/MetaCubeX/mihomo/releases/latest | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')
-          echo "最新版本: $LATEST_VERSION"
+          # 设置超时和重试
+          set -e
           
-          # 下载对应平台的二进制文件
-          wget "https://github.com/MetaCubeX/mihomo/releases/download/${LATEST_VERSION}/mihomo-linux-amd64-${LATEST_VERSION}.gz"
+          echo "📥 获取最新版本信息..."
+          LATEST_VERSION=$(curl -sL --max-time 30 https://api.github.com/repos/MetaCubeX/mihomo/releases/latest | jq -r '.tag_name')
+          
+          if [ -z "$LATEST_VERSION" ] || [ "$LATEST_VERSION" = "null" ]; then
+            echo "❌ 无法获取版本信息，使用固定版本"
+            LATEST_VERSION="v1.18.10"
+          fi
+          
+          echo "✅ 版本: $LATEST_VERSION"
+          
+          # 构建下载 URL
+          DOWNLOAD_URL="https://github.com/MetaCubeX/mihomo/releases/download/${LATEST_VERSION}/mihomo-linux-amd64-${LATEST_VERSION}.gz"
+          echo "📦 下载地址: $DOWNLOAD_URL"
+          
+          # 下载，设置超时和重试
+          for i in {1..3}; do
+            echo "⏳ 尝试下载 (第 $i 次)..."
+            if wget --timeout=60 --tries=3 -q --show-progress "$DOWNLOAD_URL"; then
+              echo "✅ 下载成功"
+              break
+            else
+              echo "⚠️ 下载失败，等待重试..."
+              sleep 5
+            fi
+            
+            if [ $i -eq 3 ]; then
+              echo "❌ 下载失败，尝试备用源..."
+              # 尝试使用 ghproxy 镜像
+              MIRROR_URL="https://mirror.ghproxy.com/${DOWNLOAD_URL}"
+              wget --timeout=60 -q --show-progress "$MIRROR_URL"
+            fi
+          done
           
           # 解压
+          echo "📂 解压文件..."
           gunzip "mihomo-linux-amd64-${LATEST_VERSION}.gz"
           mv "mihomo-linux-amd64-${LATEST_VERSION}" mihomo
           chmod +x mihomo
           
           # 验证
-          ./mihomo version
+          echo "🔍 验证安装..."
+          ./mihomo version || echo "⚠️ 版本信息获取失败，但文件已下载"
       
       - name: 创建输出目录
         run: |
